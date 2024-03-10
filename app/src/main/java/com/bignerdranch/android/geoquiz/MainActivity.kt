@@ -30,9 +30,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-//        trueButton = findViewById(R.id.true_button)
-//        falseButton = findViewById(R.id.false_button)
-
         binding.trueButton.setOnClickListener {view: View ->
             checkAnswer(true)
         }
@@ -41,19 +38,36 @@ class MainActivity : AppCompatActivity() {
             checkAnswer(false)
         }
 
+        binding.previousButton.setOnClickListener{
+            decreaseCounter()
+        }
+
         binding.nextButton.setOnClickListener {
-            currentIndex = (currentIndex + 1) % questionBank.size
-            updateQuestion()
+            increaseCounter()
         }
 
         binding.questionTextView.setOnClickListener {
-            currentIndex = (currentIndex + 1) % questionBank.size
-            updateQuestion()
+            increaseCounter()
         }
 
         updateQuestion()
     }
 
+    private fun increaseCounter() {
+        currentIndex = (currentIndex + 1) % questionBank.size
+        updateQuestion()
+    }
+
+    private fun decreaseCounter() {
+        currentIndex = (currentIndex - 1) % questionBank.size
+
+        // wrap to last element
+        if (currentIndex < 0) {
+            currentIndex = questionBank.size - 1
+        }
+
+        updateQuestion()
+    }
     private fun updateQuestion() {
         val questionTextResId = questionBank[currentIndex].textResId
         binding.questionTextView.setText(questionTextResId)
