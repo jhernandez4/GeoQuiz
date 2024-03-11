@@ -32,18 +32,22 @@ class MainActivity : AppCompatActivity() {
 
         binding.trueButton.setOnClickListener {view: View ->
             checkAnswer(true)
+            checkAnswered(currentIndex)
         }
 
         binding.falseButton.setOnClickListener {view: View ->
             checkAnswer(false)
+            checkAnswered(currentIndex)
         }
 
         binding.previousButton.setOnClickListener{
             decreaseCounter()
+            checkAnswered(currentIndex)
         }
 
         binding.nextButton.setOnClickListener {
             increaseCounter()
+            checkAnswered(currentIndex)
         }
 
         binding.questionTextView.setOnClickListener {
@@ -107,7 +111,24 @@ class MainActivity : AppCompatActivity() {
             R.string.incorrect_toast
         }
 
+        markAnswered(currentIndex)
+
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT)
             .show()
+    }
+
+    private fun markAnswered(index: Int) {
+       questionBank[index].isAnswered = true
+    }
+
+    private fun checkAnswered(index: Int) {
+        if (questionBank[index].isAnswered) {
+            binding.trueButton.isClickable = false
+            binding.falseButton.isClickable = false
+        }
+        else {
+            binding.trueButton.isClickable = true
+            binding.falseButton.isClickable = true
+        }
     }
 }
