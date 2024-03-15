@@ -7,7 +7,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import com.bignerdranch.android.geoquiz.databinding.ActivityMainBinding
-import kotlin.math.round
 
 private const val TAG = "MainActivity"
 class MainActivity : AppCompatActivity() {
@@ -34,13 +33,11 @@ class MainActivity : AppCompatActivity() {
         binding.trueButton.setOnClickListener {view: View ->
             checkAnswer(true)
             checkAnswered(currentIndex)
-            getScore()
         }
 
         binding.falseButton.setOnClickListener {view: View ->
             checkAnswer(false)
             checkAnswered(currentIndex)
-            getScore()
         }
 
         binding.previousButton.setOnClickListener{
@@ -108,59 +105,30 @@ class MainActivity : AppCompatActivity() {
     private fun checkAnswer(userAnswer: Boolean) {
         val correctAnswer = questionBank[currentIndex].answer
 
-        var isCorrect = -1
-
         val messageResId = if (userAnswer == correctAnswer) {
-            isCorrect = 1
             R.string.correct_toast
         } else {
-            isCorrect = 0
             R.string.incorrect_toast
         }
 
-        markAnswered(currentIndex, isCorrect)
+        markAnswered(currentIndex)
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT)
             .show()
     }
 
-    private fun markAnswered(index: Int, isCorrect: Int) {
-       questionBank[index].isCorrect = isCorrect
+    private fun markAnswered(index: Int) {
+       questionBank[index].isAnswered = true
     }
 
     private fun checkAnswered(index: Int) {
-        if (questionBank[index].isCorrect >= 0) {
+        if (questionBank[index].isAnswered) {
             binding.trueButton.isClickable = false
             binding.falseButton.isClickable = false
         }
-        else if (questionBank[index].isCorrect < 0){
+        else {
             binding.trueButton.isClickable = true
             binding.falseButton.isClickable = true
-        }
-    }
-
-    private fun getScore(){
-        var total = 0.0
-        var percentage = 0.0
-
-        for(question in questionBank){
-            if (question.isCorrect < 0){
-                total = -1.0
-                break
-            }
-            else {
-                total += question.isCorrect
-                Log.d(TAG, "$total")
-            }
-        }
-
-        // check if all questions have been answered
-        if (total >= 0) {
-            percentage = round((total / questionBank.size) * 100)
-            val scoreMessage = "Your score is $percentage%"
-
-            Toast.makeText(this, scoreMessage, Toast.LENGTH_SHORT)
-                .show()
         }
     }
 }
