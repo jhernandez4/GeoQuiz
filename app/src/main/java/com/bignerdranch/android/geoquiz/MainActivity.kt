@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.viewModels
 import com.bignerdranch.android.geoquiz.databinding.ActivityMainBinding
 import kotlin.math.round
 
@@ -14,16 +15,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    private val questionBank = listOf(
-        Question(R.string.question_australia, true),
-        Question(R.string.question_oceans, true),
-        Question(R.string.question_mideast, false),
-        Question(R.string.question_africa, false),
-        Question(R.string.question_asia, true),
-        Question(R.string.question_americas, true)
-    )
-
-    private var currentIndex = 0
+    private val quizViewModel: QuizViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,30 +23,32 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        Log.d(TAG, "Got a QuizViewModel: $quizViewModel")
+
         binding.trueButton.setOnClickListener {view: View ->
             checkAnswer(true)
-            checkAnswered(currentIndex)
+            checkIsAnswered()
             getScore()
         }
 
         binding.falseButton.setOnClickListener {view: View ->
             checkAnswer(false)
-            checkAnswered(currentIndex)
+            checkIsAnswered()
             getScore()
         }
 
         binding.previousButton.setOnClickListener{
             decreaseCounter()
-            checkAnswered(currentIndex)
+            checkIsAnswered()
         }
 
         binding.nextButton.setOnClickListener {
             increaseCounter()
-            checkAnswered(currentIndex)
+            checkIsAnswered()
         }
 
         binding.questionTextView.setOnClickListener {
-            increaseCounter()
+            checkIsAnswered()
         }
 
         updateQuestion()
@@ -86,27 +80,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun increaseCounter() {
-        currentIndex = (currentIndex + 1) % questionBank.size
+        quizViewModel.moveToNext()
         updateQuestion()
     }
 
     private fun decreaseCounter() {
-        currentIndex = (currentIndex - 1) % questionBank.size
-
-        // wrap to last element
-        if (currentIndex < 0) {
-            currentIndex = questionBank.size - 1
-        }
-
+        quizViewModel.moveToPrevious()
         updateQuestion()
     }
     private fun updateQuestion() {
-        val questionTextResId = questionBank[currentIndex].textResId
+        val questionTextResId = quizViewModel.currentQuestionText
         binding.questionTextView.setText(questionTextResId)
     }
 
     private fun checkAnswer(userAnswer: Boolean) {
-        val correctAnswer = questionBank[currentIndex].answer
+        val correctAnswer = quizViewModel.currentQuestionAnswer
 
         var isCorrect = -1
 
@@ -118,45 +106,29 @@ class MainActivity : AppCompatActivity() {
             R.string.incorrect_toast
         }
 
-        markAnswered(currentIndex, isCorrect)
+        quizViewModel.markAnswered(isCorrect)
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT)
             .show()
     }
 
-    private fun markAnswered(index: Int, isCorrect: Int) {
-        questionBank[index].isCorrect = isCorrect
-    }
-
-    private fun checkAnswered(index: Int) {
-        if (questionBank[index].isCorrect >= 0) {
+    private fun checkIsAnswered() {
+        if (quizViewModel.currentQuestionIsAnswered >= 0) {
             binding.trueButton.isClickable = false
             binding.falseButton.isClickable = false
         }
-        else if (questionBank[index].isCorrect < 0){
+        else if (quizViewModel.currentQuestionIsAnswered < 0){
             binding.trueButton.isClickable = true
             binding.falseButton.isClickable = true
         }
     }
 
     private fun getScore(){
-        var total = 0.0
-        var percentage = 0.0
-
-        for(question in questionBank){
-            if (question.isCorrect < 0){
-                total = -1.0
-                break
-            }
-            else {
-                total += question.isCorrect
-                Log.d(TAG, "$total")
-            }
-        }
+        var total = quizViewModel.getTotalScore()
 
         // check if all questions have been answered
         if (total >= 0) {
-            percentage = round((total / questionBank.size) * 100)
+            var percentage = round(((total / quizViewModel.questionBankSize) * 100))
             val scoreMessage = "Your score is $percentage%"
 
             Toast.makeText(this, scoreMessage, Toast.LENGTH_SHORT)
